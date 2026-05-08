@@ -1,0 +1,3971 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Guestara — Occupancy Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --bg: #0d0f11;
+        --surface: #141618;
+        --surface-2: #1c1f22;
+        --surface-3: #252a2f;
+        --border: rgba(255, 255, 255, 0.07);
+        --border-2: rgba(255, 255, 255, 0.13);
+        --amber: #f5a623;
+        --amber-dim: rgba(245, 166, 35, 0.12);
+        --amber-glow: rgba(245, 166, 35, 0.28);
+        --teal: #2dd4bf;
+        --teal-dim: rgba(45, 212, 191, 0.12);
+        --text-pri: #f0ede8;
+        --text-sec: #8a8a8a;
+        --text-ter: #5a5a5a;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 18px;
+        --sel: rgba(245, 166, 35, 0.18);
+        --sel-drag: rgba(45, 212, 191, 0.15);
+        font-family: "DM Sans", system-ui, sans-serif;
+        font-size: 14px;
+        background: var(--bg);
+        color: var(--text-pri);
+        min-height: 100vh;
+      }
+      body {
+        overflow-x: hidden;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: var(--bg);
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--surface-3);
+        border-radius: 3px;
+      }
+      .loading-screen,
+      .error-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        gap: 12px;
+        color: var(--text-sec);
+      }
+      .spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid var(--surface-3);
+        border-top-color: var(--amber);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .error-screen p {
+        max-width: 400px;
+        text-align: center;
+      }
+      .error-detail {
+        color: #f87171;
+        font-size: 12px;
+      }
+      .app {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px 48px;
+      }
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 0 16px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+      }
+      .header-brand {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .brand-logo {
+        font-size: 22px;
+        color: var(--amber);
+        line-height: 1;
+      }
+      .brand-name {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        color: var(--text-pri);
+      }
+      .brand-tagline {
+        font-size: 12px;
+        color: var(--text-ter);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .meta-info {
+        font-size: 12px;
+        color: var(--text-ter);
+        font-family: "DM Mono", monospace;
+      }
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+        transition: border-color 0.2s;
+      }
+      .stat-card:hover {
+        border-color: var(--border-2);
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--text-ter);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 6px;
+      }
+      .stat-value {
+        font-family: "DM Mono", monospace;
+        font-size: 22px;
+        font-weight: 500;
+        color: var(--amber);
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+      .stat-sub {
+        font-size: 11px;
+        color: var(--text-ter);
+      }
+      .filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      .filter-title {
+        font-size: 12px;
+        color: var(--text-ter);
+        letter-spacing: 0.5px;
+        margin-right: 4px;
+      }
+      .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .filter-label {
+        font-size: 12px;
+        color: var(--text-sec);
+        white-space: nowrap;
+      }
+      .filter-select {
+        background: var(--surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: var(--radius-sm);
+        color: var(--text-pri);
+        font-size: 12px;
+        font-family: "DM Sans", sans-serif;
+        padding: 5px 10px;
+        cursor: pointer;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .filter-select:hover,
+      .filter-select:focus {
+        border-color: var(--amber);
+      }
+      .filter-select option {
+        background: var(--surface-2);
+      }
+      .filter-clear {
+        background: none;
+        border: 1px solid rgba(248, 113, 113, 0.3);
+        border-radius: var(--radius-sm);
+        color: #f87171;
+        font-size: 12px;
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: auto;
+      }
+      .filter-clear:hover {
+        background: rgba(248, 113, 113, 0.1);
+      }
+      .main-layout {
+        display: grid;
+        grid-template-columns: 1fr 360px;
+        gap: 20px;
+        align-items: start;
+      }
+      @media (max-width: 960px) {
+        .main-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+      .calendar-section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: 24px;
+      }
+      .month-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+      .month-title {
+        flex: 1;
+        text-align: center;
+      }
+      .month-name {
+        font-family: "Playfair Display", serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-pri);
+        margin-right: 8px;
+      }
+      .month-year {
+        font-family: "DM Mono", monospace;
+        font-size: 16px;
+        color: var(--text-sec);
+      }
+      .nav-btn {
+        background: var(--surface-2);
+        border: 1px solid var(--border-2);
+        border-radius: var(--radius-sm);
+        color: var(--text-pri);
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s;
+        line-height: 1;
+      }
+      .nav-btn:hover {
+        background: var(--surface-3);
+        border-color: var(--amber);
+        color: var(--amber);
+      }
+      .today-btn {
+        background: var(--amber-dim);
+        border: 1px solid var(--amber-glow);
+        border-radius: var(--radius-sm);
+        color: var(--amber);
+        font-size: 12px;
+        font-family: "DM Sans", sans-serif;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .today-btn:hover {
+        background: var(--amber-glow);
+      }
+      .calendar-grid-wrapper {
+        user-select: none;
+      }
+      .calendar-header-row {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        margin-bottom: 6px;
+      }
+      .dow-label {
+        text-align: center;
+        font-size: 11px;
+        color: var(--text-ter);
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 4px 0;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+      }
+      .day-cell {
+        position: relative;
+        min-height: 72px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        cursor: pointer;
+        overflow: hidden;
+        transition:
+          border-color 0.15s,
+          transform 0.1s;
+        display: flex;
+        flex-direction: column;
+        padding: 6px 7px 4px;
+      }
+      .day-cell:hover {
+        border-color: var(--border-2);
+        transform: scale(1.02);
+        z-index: 1;
+      }
+      .day-cell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: var(--heat-color, transparent);
+        pointer-events: none;
+        border-radius: inherit;
+      }
+      .day-cell.dim {
+        opacity: 0.32;
+      }
+      .day-cell.today {
+        border-color: var(--amber) !important;
+      }
+      .day-cell.today .day-num {
+        color: var(--amber);
+        font-weight: 600;
+      }
+      .day-cell.selected {
+        border-color: rgba(245, 166, 35, 0.55) !important;
+        background: var(--sel);
+      }
+      .day-cell.dragging {
+        border-color: var(--teal) !important;
+        background: var(--sel-drag);
+      }
+      .day-cell.range-start {
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+      }
+      .day-cell.range-end {
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      }
+      .day-cell.range-start.range-end {
+        border-radius: var(--radius-sm);
+      }
+      .day-num {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--text-sec);
+        line-height: 1;
+        position: relative;
+        z-index: 1;
+      }
+      .day-occ {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--text-pri);
+        margin-top: auto;
+        position: relative;
+        z-index: 1;
+        opacity: 0.85;
+      }
+      .heat-bar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+        background: var(--heat-color);
+        z-index: 2;
+      }
+      .heat-legend {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 16px;
+        padding: 10px 0 0;
+        border-top: 1px solid var(--border);
+      }
+      .legend-label {
+        font-size: 11px;
+        color: var(--text-ter);
+        white-space: nowrap;
+      }
+      .legend-track {
+        display: flex;
+        gap: 3px;
+        flex: 1;
+      }
+      .legend-stop {
+        flex: 1;
+        height: 12px;
+        border-radius: 2px;
+        border: 1px solid var(--border);
+      }
+      .detail-panel {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xl);
+        padding: 20px;
+        max-height: 85vh;
+        overflow-y: auto;
+        position: sticky;
+        top: 20px;
+      }
+      .empty-panel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+      }
+      .empty-hint {
+        text-align: center;
+        color: var(--text-ter);
+      }
+      .empty-icon {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .empty-hint p {
+        font-size: 13px;
+        line-height: 1.6;
+        max-width: 220px;
+        margin: 0 auto;
+      }
+      .panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .panel-range {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--amber);
+      }
+      .panel-count {
+        font-size: 12px;
+        color: var(--text-ter);
+        margin-top: 3px;
+      }
+      .panel-actions {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .btn-export {
+        background: var(--teal-dim);
+        border: 1px solid rgba(45, 212, 191, 0.25);
+        border-radius: var(--radius-sm);
+        color: var(--teal);
+        font-size: 11px;
+        font-family: "DM Sans", sans-serif;
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+      }
+      .btn-export:hover {
+        background: rgba(45, 212, 191, 0.2);
+      }
+      .btn-clear {
+        background: none;
+        border: 1px solid var(--border-2);
+        border-radius: var(--radius-sm);
+        color: var(--text-sec);
+        font-size: 13px;
+        width: 28px;
+        height: 28px;
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .btn-clear:hover {
+        border-color: #f87171;
+        color: #f87171;
+      }
+      .panel-revenue {
+        font-size: 12px;
+        color: var(--text-sec);
+        padding: 8px 10px;
+        background: var(--amber-dim);
+        border-radius: var(--radius-sm);
+        margin-bottom: 14px;
+      }
+      .panel-revenue strong {
+        color: var(--amber);
+        font-family: "DM Mono", monospace;
+      }
+      .panel-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .no-bookings {
+        font-size: 13px;
+        color: var(--text-ter);
+        text-align: center;
+        padding: 24px 0;
+      }
+      .booking-card {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        transition: border-color 0.2s;
+      }
+      .booking-card:hover {
+        border-color: var(--border-2);
+      }
+      .booking-card-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 6px;
+      }
+      .booking-id-room {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+      .booking-id {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--text-ter);
+      }
+      .booking-room {
+        font-size: 12px;
+        color: var(--text-sec);
+        font-weight: 500;
+      }
+      .booking-room-type {
+        font-size: 11px;
+        color: var(--text-ter);
+        background: var(--surface-3);
+        border-radius: 4px;
+        padding: 2px 6px;
+      }
+      .booking-status {
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 20px;
+        white-space: nowrap;
+      }
+      .booking-guest {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--text-pri);
+        margin-bottom: 10px;
+      }
+      .booking-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px 16px;
+      }
+      .booking-detail-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 6px;
+      }
+      .detail-label {
+        font-size: 11px;
+        color: var(--text-ter);
+      }
+      .detail-value {
+        font-size: 12px;
+        color: var(--text-sec);
+        font-family: "DM Mono", monospace;
+      }
+      .detail-value.nights {
+        color: var(--teal);
+      }
+      .detail-value.amount {
+        color: var(--amber);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useState, useEffect, useMemo, useCallback, useRef } = React;
+
+      // ── Embedded bookings data (no fetch needed) ──────────────────────────────
+      const BOOKINGS_DATA = [
+        {
+          id: "BK1000",
+          guestName: "James Davis",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-01-01",
+          checkOut: "2026-01-04",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Expedia",
+        },
+        {
+          id: "BK1001",
+          guestName: "Mason Sato",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-01",
+          checkOut: "2026-01-03",
+          guests: 2,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1002",
+          guestName: "Mateo Gupta",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-01-02",
+          checkOut: "2026-01-16",
+          guests: 1,
+          totalAmount: 105000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1003",
+          guestName: "Isabella Tanaka",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-02",
+          checkOut: "2026-01-03",
+          guests: 2,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1004",
+          guestName: "Isabella Müller",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-02",
+          checkOut: "2026-01-04",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1005",
+          guestName: "Aditya Reddy",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-03",
+          checkOut: "2026-01-04",
+          guests: 2,
+          totalAmount: 4500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1006",
+          guestName: "Aditya Brown",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-01-03",
+          checkOut: "2026-01-06",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1007",
+          guestName: "Karan Rossi",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-01-03",
+          checkOut: "2026-01-07",
+          guests: 3,
+          totalAmount: 88000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1008",
+          guestName: "Rahul Tanaka",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-04",
+          checkOut: "2026-01-08",
+          guests: 1,
+          totalAmount: 48000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1009",
+          guestName: "Diya Wang",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-04",
+          checkOut: "2026-01-08",
+          guests: 2,
+          totalAmount: 88000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1010",
+          guestName: "Ethan Johnson",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-05",
+          checkOut: "2026-01-08",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1011",
+          guestName: "Rohan Sharma",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-06",
+          checkOut: "2026-01-09",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1012",
+          guestName: "Siddharth Davis",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-06",
+          checkOut: "2026-01-09",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1013",
+          guestName: "Isabella Sato",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-01-07",
+          checkOut: "2026-01-08",
+          guests: 2,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1014",
+          guestName: "Sophia Johnson",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-08",
+          checkOut: "2026-01-13",
+          guests: 2,
+          totalAmount: 60000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1015",
+          guestName: "Sophia Gupta",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-01-08",
+          checkOut: "2026-01-18",
+          guests: 1,
+          totalAmount: 220000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1016",
+          guestName: "Sophia Khan",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-08",
+          checkOut: "2026-01-09",
+          guests: 2,
+          totalAmount: 22000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1017",
+          guestName: "Carlos Johnson",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-09",
+          checkOut: "2026-01-13",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1018",
+          guestName: "Siddharth Tanaka",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-01-09",
+          checkOut: "2026-01-16",
+          guests: 3,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1019",
+          guestName: "Aditya Singh",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-09",
+          checkOut: "2026-01-12",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1020",
+          guestName: "Meera Johnson",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-09",
+          checkOut: "2026-01-19",
+          guests: 2,
+          totalAmount: 220000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1021",
+          guestName: "James Reddy",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-01-11",
+          checkOut: "2026-01-12",
+          guests: 2,
+          totalAmount: 4500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1022",
+          guestName: "Kavya Gupta",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-12",
+          checkOut: "2026-01-15",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1023",
+          guestName: "Nisha Nair",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-12",
+          checkOut: "2026-01-16",
+          guests: 3,
+          totalAmount: 48000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1024",
+          guestName: "Isabella Martinez",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-01-13",
+          checkOut: "2026-01-27",
+          guests: 2,
+          totalAmount: 105000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1025",
+          guestName: "Rahul Mehta",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-14",
+          checkOut: "2026-01-17",
+          guests: 3,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1026",
+          guestName: "Rahul Tanaka",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-15",
+          checkOut: "2026-01-20",
+          guests: 1,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_in",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1027",
+          guestName: "Carlos Tanaka",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-01-15",
+          checkOut: "2026-01-18",
+          guests: 1,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1028",
+          guestName: "Mei Rodriguez",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-16",
+          checkOut: "2026-01-20",
+          guests: 4,
+          totalAmount: 30000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1029",
+          guestName: "Carlos Wang",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-01-18",
+          checkOut: "2026-01-19",
+          guests: 4,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1030",
+          guestName: "Karan Kumar",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-20",
+          checkOut: "2026-01-22",
+          guests: 3,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Direct",
+        },
+        {
+          id: "BK1031",
+          guestName: "Omar Shah",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-01-20",
+          checkOut: "2026-01-30",
+          guests: 4,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1032",
+          guestName: "Valentina Reddy",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-20",
+          checkOut: "2026-01-24",
+          guests: 2,
+          totalAmount: 48000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1033",
+          guestName: "Meera Sharma",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-21",
+          checkOut: "2026-01-24",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1034",
+          guestName: "Rohan Sato",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-23",
+          checkOut: "2026-01-25",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1035",
+          guestName: "Olivia Sharma",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-23",
+          checkOut: "2026-01-25",
+          guests: 2,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1036",
+          guestName: "Sophia Garcia",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-01-23",
+          checkOut: "2026-01-30",
+          guests: 1,
+          totalAmount: 154000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1037",
+          guestName: "Ishita Joshi",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-24",
+          checkOut: "2026-01-27",
+          guests: 4,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1038",
+          guestName: "Liam Rossi",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-01-25",
+          checkOut: "2026-02-01",
+          guests: 1,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1039",
+          guestName: "Arjun Lee",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-01-25",
+          checkOut: "2026-02-08",
+          guests: 2,
+          totalAmount: 105000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1040",
+          guestName: "Mei Williams",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-01-26",
+          checkOut: "2026-01-30",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1041",
+          guestName: "Mason Kumar",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-26",
+          checkOut: "2026-01-28",
+          guests: 1,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1042",
+          guestName: "Charlotte Dubois",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-26",
+          checkOut: "2026-01-29",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1043",
+          guestName: "Charlotte Mehta",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-01-27",
+          checkOut: "2026-01-31",
+          guests: 1,
+          totalAmount: 30000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1044",
+          guestName: "Sofia Joshi",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-01-28",
+          checkOut: "2026-02-02",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1045",
+          guestName: "Hiroshi Iyer",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-01-28",
+          checkOut: "2026-01-31",
+          guests: 2,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1046",
+          guestName: "Yuki Silva",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-01-29",
+          checkOut: "2026-01-31",
+          guests: 3,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1047",
+          guestName: "Aditya Martinez",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-01-30",
+          checkOut: "2026-02-01",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1048",
+          guestName: "Valentina Joshi",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-30",
+          checkOut: "2026-01-31",
+          guests: 4,
+          totalAmount: 12000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1049",
+          guestName: "Lucas Müller",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-01-31",
+          checkOut: "2026-02-05",
+          guests: 1,
+          totalAmount: 60000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1050",
+          guestName: "Charlotte Kumar",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-01-31",
+          checkOut: "2026-02-02",
+          guests: 1,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1051",
+          guestName: "Rohan Müller",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-01",
+          checkOut: "2026-02-05",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1052",
+          guestName: "Lucas Nair",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-02-01",
+          checkOut: "2026-02-03",
+          guests: 2,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1053",
+          guestName: "Diya Nair",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-02-02",
+          checkOut: "2026-02-09",
+          guests: 3,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1054",
+          guestName: "Hiroshi Iyer",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-02-02",
+          checkOut: "2026-02-05",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1055",
+          guestName: "Aditya Ahmed",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-03",
+          checkOut: "2026-02-07",
+          guests: 1,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1056",
+          guestName: "Mateo Iyer",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-02-03",
+          checkOut: "2026-02-06",
+          guests: 3,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Agoda",
+        },
+        {
+          id: "BK1057",
+          guestName: "Noah Smith",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-04",
+          checkOut: "2026-02-07",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1058",
+          guestName: "Ava Iyer",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-02-04",
+          checkOut: "2026-02-18",
+          guests: 1,
+          totalAmount: 308000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1059",
+          guestName: "Arjun Müller",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-02-05",
+          checkOut: "2026-02-07",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1060",
+          guestName: "Liam Sharma",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-02-05",
+          checkOut: "2026-02-08",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1061",
+          guestName: "Carlos Reddy",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-06",
+          checkOut: "2026-02-08",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Agoda",
+        },
+        {
+          id: "BK1062",
+          guestName: "Ishita Verma",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-02-06",
+          checkOut: "2026-02-09",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1063",
+          guestName: "Kavya Rodriguez",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-07",
+          checkOut: "2026-02-10",
+          guests: 4,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1064",
+          guestName: "Ishita Silva",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-02-08",
+          checkOut: "2026-02-15",
+          guests: 3,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1065",
+          guestName: "Siddharth Singh",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-09",
+          checkOut: "2026-02-14",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1066",
+          guestName: "James Davis",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-02-09",
+          checkOut: "2026-02-11",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1067",
+          guestName: "Priya Iyer",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-02-09",
+          checkOut: "2026-02-19",
+          guests: 1,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1068",
+          guestName: "Charlotte Lee",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-10",
+          checkOut: "2026-02-17",
+          guests: 2,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1069",
+          guestName: "Wei Nair",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-02-10",
+          checkOut: "2026-02-17",
+          guests: 2,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1070",
+          guestName: "Nisha Johnson",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-11",
+          checkOut: "2026-02-16",
+          guests: 2,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Agoda",
+        },
+        {
+          id: "BK1071",
+          guestName: "Logan Shah",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-02-11",
+          checkOut: "2026-02-14",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1072",
+          guestName: "Vikram Smith",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-02-14",
+          checkOut: "2026-02-21",
+          guests: 1,
+          totalAmount: 52500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1073",
+          guestName: "Ishita Wang",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-15",
+          checkOut: "2026-02-18",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1074",
+          guestName: "Mia Rossi",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-02-16",
+          checkOut: "2026-02-21",
+          guests: 1,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1075",
+          guestName: "Aditya Rodriguez",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-02-16",
+          checkOut: "2026-02-23",
+          guests: 2,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1076",
+          guestName: "Sofia Sharma",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-02-16",
+          checkOut: "2026-02-21",
+          guests: 2,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1077",
+          guestName: "Vikram Rodriguez",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-18",
+          checkOut: "2026-02-20",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1078",
+          guestName: "Nisha Davis",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-18",
+          checkOut: "2026-02-21",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1079",
+          guestName: "Valentina Gupta",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-02-18",
+          checkOut: "2026-02-23",
+          guests: 2,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1080",
+          guestName: "Pooja Gupta",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-19",
+          checkOut: "2026-02-21",
+          guests: 3,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1081",
+          guestName: "Yuki Müller",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-02-19",
+          checkOut: "2026-02-24",
+          guests: 2,
+          totalAmount: 60000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1082",
+          guestName: "James Mehta",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-02-21",
+          checkOut: "2026-02-26",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1083",
+          guestName: "Omar Shah",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-21",
+          checkOut: "2026-02-22",
+          guests: 2,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1084",
+          guestName: "Meera Martinez",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-02-21",
+          checkOut: "2026-02-23",
+          guests: 2,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1085",
+          guestName: "Sofia Iyer",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-22",
+          checkOut: "2026-02-24",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1086",
+          guestName: "Pooja Müller",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-22",
+          checkOut: "2026-02-25",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1087",
+          guestName: "Mateo Joshi",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-02-23",
+          checkOut: "2026-02-27",
+          guests: 1,
+          totalAmount: 30000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1088",
+          guestName: "Emma Kumar",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-24",
+          checkOut: "2026-02-25",
+          guests: 2,
+          totalAmount: 4500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1089",
+          guestName: "Priya Patel",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-24",
+          checkOut: "2026-02-26",
+          guests: 1,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1090",
+          guestName: "Olivia Silva",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-02-24",
+          checkOut: "2026-02-26",
+          guests: 1,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1091",
+          guestName: "Aisha Sato",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-02-25",
+          checkOut: "2026-03-02",
+          guests: 1,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1092",
+          guestName: "Carlos Smith",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-02-25",
+          checkOut: "2026-02-27",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1093",
+          guestName: "Arjun Lee",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-02-25",
+          checkOut: "2026-03-01",
+          guests: 2,
+          totalAmount: 48000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1094",
+          guestName: "Emma Müller",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-02-26",
+          checkOut: "2026-03-03",
+          guests: 2,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1095",
+          guestName: "Isabella Kumar",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-02-26",
+          checkOut: "2026-03-05",
+          guests: 2,
+          totalAmount: 154000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1096",
+          guestName: "Omar Iyer",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-02-27",
+          checkOut: "2026-03-04",
+          guests: 2,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1097",
+          guestName: "Isabella Dubois",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-02-28",
+          checkOut: "2026-03-02",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1098",
+          guestName: "Carlos Rossi",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-02-28",
+          checkOut: "2026-03-07",
+          guests: 1,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1099",
+          guestName: "Diya Garcia",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-02-28",
+          checkOut: "2026-03-03",
+          guests: 1,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1100",
+          guestName: "Mateo Gupta",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-02-28",
+          checkOut: "2026-03-05",
+          guests: 2,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "checked_in",
+          source: "Expedia",
+        },
+        {
+          id: "BK1101",
+          guestName: "James Sato",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-02",
+          checkOut: "2026-03-04",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Expedia",
+        },
+        {
+          id: "BK1102",
+          guestName: "Lucas Iyer",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-03-02",
+          checkOut: "2026-03-16",
+          guests: 2,
+          totalAmount: 168000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Direct",
+        },
+        {
+          id: "BK1103",
+          guestName: "Valentina Verma",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-03-03",
+          checkOut: "2026-03-05",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1104",
+          guestName: "Priya Reddy",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-03-04",
+          checkOut: "2026-03-09",
+          guests: 1,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1105",
+          guestName: "Olivia Verma",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-05",
+          checkOut: "2026-03-07",
+          guests: 1,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1106",
+          guestName: "Mia Joshi",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-03-05",
+          checkOut: "2026-03-08",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Agoda",
+        },
+        {
+          id: "BK1107",
+          guestName: "Karan Ahmed",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-03-06",
+          checkOut: "2026-03-08",
+          guests: 2,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1108",
+          guestName: "Arjun Davis",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-07",
+          checkOut: "2026-03-10",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1109",
+          guestName: "Sofia Dubois",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-07",
+          checkOut: "2026-03-09",
+          guests: 1,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Agoda",
+        },
+        {
+          id: "BK1110",
+          guestName: "Olivia Martinez",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-03-07",
+          checkOut: "2026-03-09",
+          guests: 1,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Expedia",
+        },
+        {
+          id: "BK1111",
+          guestName: "Nisha Smith",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-07",
+          checkOut: "2026-03-08",
+          guests: 3,
+          totalAmount: 22000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Expedia",
+        },
+        {
+          id: "BK1112",
+          guestName: "Ishita Garcia",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-03-08",
+          checkOut: "2026-03-18",
+          guests: 2,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1113",
+          guestName: "Nisha Lee",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-03-08",
+          checkOut: "2026-03-18",
+          guests: 1,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1114",
+          guestName: "Mateo Rodriguez",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-09",
+          checkOut: "2026-03-12",
+          guests: 3,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1115",
+          guestName: "Siddharth Reddy",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-03-10",
+          checkOut: "2026-03-12",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1116",
+          guestName: "Rahul Khan",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-11",
+          checkOut: "2026-03-18",
+          guests: 2,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1117",
+          guestName: "Yuki Brown",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-03-12",
+          checkOut: "2026-03-17",
+          guests: 1,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1118",
+          guestName: "Kavya Nair",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-03-12",
+          checkOut: "2026-03-14",
+          guests: 2,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1119",
+          guestName: "Ananya Nair",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-12",
+          checkOut: "2026-03-17",
+          guests: 1,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1120",
+          guestName: "Rahul Khan",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-13",
+          checkOut: "2026-03-20",
+          guests: 1,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "checked_in",
+          source: "Agoda",
+        },
+        {
+          id: "BK1121",
+          guestName: "James Silva",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-03-13",
+          checkOut: "2026-03-20",
+          guests: 3,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1122",
+          guestName: "Pooja Singh",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-03-14",
+          checkOut: "2026-03-16",
+          guests: 2,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1123",
+          guestName: "Hiroshi Williams",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-03-16",
+          checkOut: "2026-03-19",
+          guests: 3,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1124",
+          guestName: "Lucas Smith",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-03-17",
+          checkOut: "2026-03-20",
+          guests: 4,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1125",
+          guestName: "Mason Khan",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-18",
+          checkOut: "2026-03-22",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1126",
+          guestName: "Rohan Verma",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-03-18",
+          checkOut: "2026-03-20",
+          guests: 4,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1127",
+          guestName: "Nisha Ahmed",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-18",
+          checkOut: "2026-03-22",
+          guests: 2,
+          totalAmount: 88000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1128",
+          guestName: "Sofia Rodriguez",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-03-19",
+          checkOut: "2026-03-24",
+          guests: 2,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1129",
+          guestName: "Mei Nair",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-20",
+          checkOut: "2026-03-23",
+          guests: 4,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1130",
+          guestName: "Vikram Mehta",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-03-20",
+          checkOut: "2026-03-22",
+          guests: 1,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1131",
+          guestName: "Omar Patel",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-03-21",
+          checkOut: "2026-03-24",
+          guests: 2,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1132",
+          guestName: "Lucas Nair",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-03-22",
+          checkOut: "2026-03-24",
+          guests: 1,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1133",
+          guestName: "Rohan Müller",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-22",
+          checkOut: "2026-03-26",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1134",
+          guestName: "Aarav Müller",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-03-22",
+          checkOut: "2026-03-23",
+          guests: 2,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "checked_in",
+          source: "Expedia",
+        },
+        {
+          id: "BK1135",
+          guestName: "Vikram Reddy",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-03-22",
+          checkOut: "2026-03-24",
+          guests: 1,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1136",
+          guestName: "Charlotte Tanaka",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-03-23",
+          checkOut: "2026-04-02",
+          guests: 2,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1137",
+          guestName: "Aditya Joshi",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-03-23",
+          checkOut: "2026-03-26",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1138",
+          guestName: "Valentina Brown",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-23",
+          checkOut: "2026-03-25",
+          guests: 2,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1139",
+          guestName: "Emma Ahmed",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-25",
+          checkOut: "2026-03-27",
+          guests: 3,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1140",
+          guestName: "Sofia Wang",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-03-25",
+          checkOut: "2026-04-04",
+          guests: 4,
+          totalAmount: 45000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1141",
+          guestName: "Ava Müller",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-03-25",
+          checkOut: "2026-03-27",
+          guests: 4,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1142",
+          guestName: "Hiroshi Müller",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-03-25",
+          checkOut: "2026-04-04",
+          guests: 1,
+          totalAmount: 220000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Expedia",
+        },
+        {
+          id: "BK1143",
+          guestName: "Aditya Iyer",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-03-26",
+          checkOut: "2026-04-02",
+          guests: 2,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1144",
+          guestName: "Sofia Williams",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-03-26",
+          checkOut: "2026-03-30",
+          guests: 2,
+          totalAmount: 30000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1145",
+          guestName: "Sofia Verma",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-03-26",
+          checkOut: "2026-04-09",
+          guests: 4,
+          totalAmount: 168000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1146",
+          guestName: "Ishita Sharma",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-03-26",
+          checkOut: "2026-03-28",
+          guests: 4,
+          totalAmount: 44000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1147",
+          guestName: "James Davis",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-03-27",
+          checkOut: "2026-03-29",
+          guests: 1,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1148",
+          guestName: "Diya Johnson",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-03-27",
+          checkOut: "2026-04-03",
+          guests: 1,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1149",
+          guestName: "James Khan",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-03-29",
+          checkOut: "2026-03-30",
+          guests: 2,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1150",
+          guestName: "Emma Verma",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-04-02",
+          checkOut: "2026-04-04",
+          guests: 3,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1151",
+          guestName: "Emma Ahmed",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-02",
+          checkOut: "2026-04-05",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1152",
+          guestName: "Omar Khan",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-02",
+          checkOut: "2026-04-05",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+        {
+          id: "BK1153",
+          guestName: "Aditya Lee",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-02",
+          checkOut: "2026-04-04",
+          guests: 1,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1154",
+          guestName: "Liam Shah",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-04-02",
+          checkOut: "2026-04-07",
+          guests: 3,
+          totalAmount: 110000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1155",
+          guestName: "Wei Rodriguez",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-04-03",
+          checkOut: "2026-04-10",
+          guests: 2,
+          totalAmount: 31500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1156",
+          guestName: "Carlos Patel",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-04",
+          checkOut: "2026-04-06",
+          guests: 1,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1157",
+          guestName: "Isabella Lee",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-04-04",
+          checkOut: "2026-04-14",
+          guests: 2,
+          totalAmount: 120000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1158",
+          guestName: "Mei Mehta",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-06",
+          checkOut: "2026-04-09",
+          guests: 4,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1159",
+          guestName: "Priya Singh",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-04-06",
+          checkOut: "2026-04-11",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1160",
+          guestName: "Noah Müller",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-06",
+          checkOut: "2026-04-11",
+          guests: 2,
+          totalAmount: 37500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1161",
+          guestName: "Vikram Dubois",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-04-06",
+          checkOut: "2026-04-09",
+          guests: 4,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1162",
+          guestName: "Liam Iyer",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-07",
+          checkOut: "2026-04-09",
+          guests: 1,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1163",
+          guestName: "Olivia Rodriguez",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-07",
+          checkOut: "2026-04-08",
+          guests: 1,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1164",
+          guestName: "Carlos Tanaka",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-04-08",
+          checkOut: "2026-04-11",
+          guests: 1,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1165",
+          guestName: "Pooja Smith",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-09",
+          checkOut: "2026-04-11",
+          guests: 2,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1166",
+          guestName: "Isabella Nair",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-09",
+          checkOut: "2026-04-12",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1167",
+          guestName: "James Martinez",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-04-09",
+          checkOut: "2026-04-12",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1168",
+          guestName: "Aditya Smith",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-10",
+          checkOut: "2026-04-13",
+          guests: 1,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1169",
+          guestName: "Mei Silva",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-04-11",
+          checkOut: "2026-04-13",
+          guests: 4,
+          totalAmount: 9000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1170",
+          guestName: "Mason Wang",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-11",
+          checkOut: "2026-04-14",
+          guests: 2,
+          totalAmount: 13500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Agoda",
+        },
+        {
+          id: "BK1171",
+          guestName: "Mateo Rodriguez",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-11",
+          checkOut: "2026-04-14",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_in",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1172",
+          guestName: "Valentina Garcia",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-04-11",
+          checkOut: "2026-04-12",
+          guests: 2,
+          totalAmount: 22000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1173",
+          guestName: "Aisha Johnson",
+          roomNumber: "103",
+          roomType: "Standard",
+          checkIn: "2026-04-13",
+          checkOut: "2026-04-27",
+          guests: 1,
+          totalAmount: 63000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1174",
+          guestName: "Charlotte Johnson",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-13",
+          checkOut: "2026-04-16",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1175",
+          guestName: "Mia Sato",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-13",
+          checkOut: "2026-04-14",
+          guests: 1,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1176",
+          guestName: "Isabella Müller",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-04-13",
+          checkOut: "2026-04-17",
+          guests: 2,
+          totalAmount: 88000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1177",
+          guestName: "Olivia Iyer",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-04-14",
+          checkOut: "2026-04-15",
+          guests: 4,
+          totalAmount: 4500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1178",
+          guestName: "Nisha Verma",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-14",
+          checkOut: "2026-04-21",
+          guests: 1,
+          totalAmount: 52500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1179",
+          guestName: "Mateo Martinez",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-14",
+          checkOut: "2026-04-15",
+          guests: 4,
+          totalAmount: 7500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1180",
+          guestName: "Noah Iyer",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-15",
+          checkOut: "2026-04-25",
+          guests: 2,
+          totalAmount: 45000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1181",
+          guestName: "Noah Lee",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-04-17",
+          checkOut: "2026-04-24",
+          guests: 2,
+          totalAmount: 84000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1182",
+          guestName: "Priya Rodriguez",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-04-17",
+          checkOut: "2026-04-19",
+          guests: 2,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1183",
+          guestName: "Mateo Johnson",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-04-17",
+          checkOut: "2026-04-24",
+          guests: 3,
+          totalAmount: 154000,
+          currency: "INR",
+          status: "cancelled",
+          source: "Expedia",
+        },
+        {
+          id: "BK1184",
+          guestName: "Yuki Rossi",
+          roomNumber: "101",
+          roomType: "Standard",
+          checkIn: "2026-04-18",
+          checkOut: "2026-04-28",
+          guests: 1,
+          totalAmount: 45000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1185",
+          guestName: "Kavya Brown",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-18",
+          checkOut: "2026-04-21",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1186",
+          guestName: "Priya Müller",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-19",
+          checkOut: "2026-04-22",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "cancelled",
+          source: "Expedia",
+        },
+        {
+          id: "BK1187",
+          guestName: "Sofia Sharma",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-21",
+          checkOut: "2026-04-24",
+          guests: 3,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Booking.com",
+        },
+        {
+          id: "BK1188",
+          guestName: "Mia Lee",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-22",
+          checkOut: "2026-04-24",
+          guests: 4,
+          totalAmount: 15000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1189",
+          guestName: "Aisha Johnson",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-04-22",
+          checkOut: "2026-04-25",
+          guests: 2,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1190",
+          guestName: "Lucas Müller",
+          roomNumber: "201",
+          roomType: "Deluxe",
+          checkIn: "2026-04-23",
+          checkOut: "2026-05-03",
+          guests: 2,
+          totalAmount: 75000,
+          currency: "INR",
+          status: "checked_in",
+          source: "Agoda",
+        },
+        {
+          id: "BK1191",
+          guestName: "Pooja Tanaka",
+          roomNumber: "202",
+          roomType: "Deluxe",
+          checkIn: "2026-04-24",
+          checkOut: "2026-04-28",
+          guests: 2,
+          totalAmount: 30000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1192",
+          guestName: "Liam Iyer",
+          roomNumber: "301",
+          roomType: "Suite",
+          checkIn: "2026-04-24",
+          checkOut: "2026-04-25",
+          guests: 2,
+          totalAmount: 12000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1193",
+          guestName: "Charlotte Silva",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-04-24",
+          checkOut: "2026-04-26",
+          guests: 1,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Walk-in",
+        },
+        {
+          id: "BK1194",
+          guestName: "Vikram Sharma",
+          roomNumber: "102",
+          roomType: "Standard",
+          checkIn: "2026-04-25",
+          checkOut: "2026-04-29",
+          guests: 2,
+          totalAmount: 18000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Agoda",
+        },
+        {
+          id: "BK1195",
+          guestName: "Karan Müller",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-25",
+          checkOut: "2026-04-28",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "confirmed",
+          source: "Airbnb",
+        },
+        {
+          id: "BK1196",
+          guestName: "Sofia Sato",
+          roomNumber: "401",
+          roomType: "Penthouse",
+          checkIn: "2026-04-25",
+          checkOut: "2026-04-29",
+          guests: 3,
+          totalAmount: 88000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Expedia",
+        },
+        {
+          id: "BK1197",
+          guestName: "Priya Shah",
+          roomNumber: "402",
+          roomType: "Penthouse",
+          checkIn: "2026-04-26",
+          checkOut: "2026-04-29",
+          guests: 1,
+          totalAmount: 66000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Agoda",
+        },
+        {
+          id: "BK1198",
+          guestName: "Olivia Brown",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-04-27",
+          checkOut: "2026-04-29",
+          guests: 4,
+          totalAmount: 24000,
+          currency: "INR",
+          status: "confirmed",
+          source: "Direct",
+        },
+        {
+          id: "BK1199",
+          guestName: "Isabella Rossi",
+          roomNumber: "203",
+          roomType: "Deluxe",
+          checkIn: "2026-04-29",
+          checkOut: "2026-05-02",
+          guests: 2,
+          totalAmount: 22500,
+          currency: "INR",
+          status: "checked_out",
+          source: "Direct",
+        },
+        {
+          id: "BK1200",
+          guestName: "Sophia Wang",
+          roomNumber: "302",
+          roomType: "Suite",
+          checkIn: "2026-04-29",
+          checkOut: "2026-05-02",
+          guests: 2,
+          totalAmount: 36000,
+          currency: "INR",
+          status: "checked_out",
+          source: "Expedia",
+        },
+      ];
+
+      // ── Date utilities ────────────────────────────────────────────────────────
+      function parseDate(str) {
+        const [y, m, d] = str.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      }
+      function toDateStr(d) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      }
+      function addDays(d, n) {
+        const r = new Date(d);
+        r.setDate(r.getDate() + n);
+        return r;
+      }
+      function nightsBetween(ci, co) {
+        return Math.round((parseDate(co) - parseDate(ci)) / 86400000);
+      }
+      const MONTH_NAMES = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+      function getCalendarCells(year, month) {
+        const firstDow = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const cells = [];
+        for (let i = firstDow - 1; i >= 0; i--)
+          cells.push({
+            dateStr: toDateStr(new Date(year, month, -i)),
+            isCurrentMonth: false,
+          });
+        for (let d = 1; d <= daysInMonth; d++)
+          cells.push({
+            dateStr: toDateStr(new Date(year, month, d)),
+            isCurrentMonth: true,
+          });
+        let nextDay = 1;
+        while (cells.length % 7 !== 0)
+          cells.push({
+            dateStr: toDateStr(new Date(year, month + 1, nextDay++)),
+            isCurrentMonth: false,
+          });
+        return cells;
+      }
+
+      // ── Booking utilities ─────────────────────────────────────────────────────
+      const TOTAL_ROOMS = 10;
+
+      function buildOccupancyMap(bookings) {
+        const map = {};
+        for (const b of bookings) {
+          if (b.status === "cancelled") continue;
+          let cur = parseDate(b.checkIn);
+          const end = parseDate(b.checkOut);
+          while (cur < end) {
+            const key = toDateStr(cur);
+            map[key] = (map[key] || 0) + 1;
+            cur = addDays(cur, 1);
+          }
+        }
+        return map;
+      }
+
+      function heatColor(count) {
+        if (!count) return null;
+        const p = Math.min(count / TOTAL_ROOMS, 1);
+        const h = Math.round(195 - p * 195);
+        const s = Math.round(58 + p * 32);
+        const l = Math.round(54 - p * 17);
+        const a = 0.18 + p * 0.72;
+        return `hsla(${h},${s}%,${l}%,${a})`;
+      }
+
+      function getBookingsInRange(bookings, startStr, endStr) {
+        if (!startStr) return [];
+        const end = endStr || startStr;
+        return bookings.filter(
+          (b) => b.checkIn <= end && b.checkOut > startStr,
+        );
+      }
+
+      function applyFilters(bookings, { status, roomType, source }) {
+        return bookings.filter(
+          (b) =>
+            (status === "all" || b.status === status) &&
+            (roomType === "all" || b.roomType === roomType) &&
+            (source === "all" || b.source === source),
+        );
+      }
+
+      function computeMonthStats(bookings, occupancyMap, year, month) {
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const prefix = `${year}-${String(month + 1).padStart(2, "0")}`;
+        const mStart = `${prefix}-01`;
+        const mEnd = `${prefix}-${String(daysInMonth).padStart(2, "0")}`;
+        let totalOcc = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          const key = `${prefix}-${String(d).padStart(2, "0")}`;
+          totalOcc += occupancyMap[key] || 0;
+        }
+        const avgOccPct = Math.round(
+          (totalOcc / (daysInMonth * TOTAL_ROOMS)) * 100,
+        );
+        const monthCheckIns = bookings.filter(
+          (b) => b.status !== "cancelled" && b.checkIn.startsWith(prefix),
+        );
+        const revenue = monthCheckIns.reduce((s, b) => s + b.totalAmount, 0);
+        const active = bookings.filter(
+          (b) =>
+            b.status !== "cancelled" &&
+            b.checkIn <= mEnd &&
+            b.checkOut > mStart,
+        );
+        const typeCounts = {};
+        for (const b of active)
+          typeCounts[b.roomType] = (typeCounts[b.roomType] || 0) + 1;
+        const topType =
+          Object.entries(typeCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "—";
+        return { avgOccPct, revenue, activeCount: active.length, topType };
+      }
+
+      const STATUS_META = {
+        confirmed: {
+          label: "Confirmed",
+          color: "#4ade80",
+          bg: "rgba(74,222,128,0.12)",
+        },
+        checked_in: {
+          label: "Checked In",
+          color: "#60a5fa",
+          bg: "rgba(96,165,250,0.12)",
+        },
+        checked_out: {
+          label: "Checked Out",
+          color: "#a78bfa",
+          bg: "rgba(167,139,250,0.12)",
+        },
+        cancelled: {
+          label: "Cancelled",
+          color: "#f87171",
+          bg: "rgba(248,113,113,0.12)",
+        },
+      };
+
+      // ── Components ────────────────────────────────────────────────────────────
+
+      function StatsStrip({ stats }) {
+        const { avgOccPct, revenue, activeCount, topType } = stats;
+        const fmt = (n) =>
+          new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(
+            n,
+          );
+        return (
+          <div className="stats-strip">
+            <div className="stat-card">
+              <p className="stat-label">Avg Occupancy</p>
+              <p className="stat-value">{avgOccPct}%</p>
+              <p className="stat-sub">this month</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Revenue (check-ins)</p>
+              <p className="stat-value">₹{fmt(revenue)}</p>
+              <p className="stat-sub">non-cancelled</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Active Bookings</p>
+              <p className="stat-value">{activeCount}</p>
+              <p className="stat-sub">overlapping month</p>
+            </div>
+            <div className="stat-card">
+              <p className="stat-label">Top Room Type</p>
+              <p
+                className="stat-value"
+                style={{ fontSize: "16px", paddingTop: "3px" }}
+              >
+                {topType}
+              </p>
+              <p className="stat-sub">most booked</p>
+            </div>
+          </div>
+        );
+      }
+
+      const STATUSES = [
+        "all",
+        "confirmed",
+        "checked_in",
+        "checked_out",
+        "cancelled",
+      ];
+      const ROOM_TYPES = ["all", "Standard", "Deluxe", "Suite", "Penthouse"];
+      const SOURCES = [
+        "all",
+        "Direct",
+        "Airbnb",
+        "Booking.com",
+        "Expedia",
+        "Agoda",
+        "Walk-in",
+      ];
+
+      function FilterBar({ filters, onFiltersChange }) {
+        const set = (key) => (val) =>
+          onFiltersChange({ ...filters, [key]: val });
+        const active =
+          filters.status !== "all" ||
+          filters.roomType !== "all" ||
+          filters.source !== "all";
+        return (
+          <div className="filter-bar">
+            <span className="filter-title">🔧 Filters</span>
+            {[
+              ["Status", STATUSES, "status"],
+              ["Room Type", ROOM_TYPES, "roomType"],
+              ["Source", SOURCES, "source"],
+            ].map(([lbl, opts, key]) => (
+              <div className="filter-group" key={key}>
+                <label className="filter-label">{lbl}</label>
+                <select
+                  className="filter-select"
+                  value={filters[key]}
+                  onChange={(e) => set(key)(e.target.value)}
+                >
+                  {opts.map((o) => (
+                    <option key={o} value={o}>
+                      {o === "all" ? `All ${lbl}s` : o}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+            {active && (
+              <button
+                className="filter-clear"
+                onClick={() =>
+                  onFiltersChange({
+                    status: "all",
+                    roomType: "all",
+                    source: "all",
+                  })
+                }
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
+        );
+      }
+
+      function MonthNav({ year, month, onPrev, onNext, onToday }) {
+        const today = new Date();
+        const isToday =
+          today.getFullYear() === year && today.getMonth() === month;
+        return (
+          <div className="month-nav">
+            <button className="nav-btn" onClick={onPrev}>
+              ‹
+            </button>
+            <div className="month-title">
+              <span className="month-name">{MONTH_NAMES[month]}</span>
+              <span className="month-year">{year}</span>
+            </div>
+            <button className="nav-btn" onClick={onNext}>
+              ›
+            </button>
+            {!isToday && (
+              <button className="today-btn" onClick={onToday}>
+                Today
+              </button>
+            )}
+          </div>
+        );
+      }
+
+      function DayCell({
+        dateStr,
+        occupancy,
+        isCurrentMonth,
+        isToday,
+        isSelected,
+        isDragging,
+        isRangeStart,
+        isRangeEnd,
+        onMouseDown,
+        onMouseEnter,
+      }) {
+        const day = Number(dateStr.slice(8));
+        const bg = heatColor(occupancy);
+        let cls = "day-cell";
+        if (!isCurrentMonth) cls += " dim";
+        if (isToday) cls += " today";
+        if (isSelected) cls += " selected";
+        if (isDragging) cls += " dragging";
+        if (isRangeStart) cls += " range-start";
+        if (isRangeEnd) cls += " range-end";
+        return (
+          <div
+            className={cls}
+            style={bg ? { "--heat-color": bg } : {}}
+            onMouseDown={onMouseDown}
+            onMouseEnter={onMouseEnter}
+            title={
+              occupancy
+                ? `${occupancy}/${TOTAL_ROOMS} rooms occupied`
+                : "No bookings"
+            }
+          >
+            <span className="day-num">{day}</span>
+            {occupancy > 0 && (
+              <span className="day-occ">
+                {occupancy}/{TOTAL_ROOMS}
+              </span>
+            )}
+            {occupancy > 0 && (
+              <div
+                className="heat-bar"
+                style={{ width: `${(occupancy / TOTAL_ROOMS) * 100}%` }}
+              />
+            )}
+          </div>
+        );
+      }
+
+      function CalendarGrid({
+        year,
+        month,
+        occupancyMap,
+        selection,
+        dragState,
+        onCellMouseDown,
+        onCellMouseEnter,
+      }) {
+        const cells = getCalendarCells(year, month);
+        const todayStr = toDateStr(new Date());
+        const { start: selStart, end: selEnd } = selection;
+        return (
+          <div className="calendar-grid-wrapper">
+            <div className="calendar-header-row">
+              {DAY_NAMES.map((d) => (
+                <div key={d} className="dow-label">
+                  {d}
+                </div>
+              ))}
+            </div>
+            <div className="calendar-grid">
+              {cells.map(({ dateStr, isCurrentMonth }) => {
+                const occ = occupancyMap[dateStr] || 0;
+                const isToday = dateStr === todayStr;
+                const isSelected = !!(
+                  selStart &&
+                  selEnd &&
+                  dateStr >= selStart &&
+                  dateStr <= selEnd
+                );
+                const isDragging =
+                  dragState.active && dragState.inRange(dateStr);
+                return (
+                  <DayCell
+                    key={dateStr}
+                    dateStr={dateStr}
+                    occupancy={occ}
+                    isCurrentMonth={isCurrentMonth}
+                    isToday={isToday}
+                    isSelected={isSelected}
+                    isDragging={isDragging}
+                    isRangeStart={isSelected && dateStr === selStart}
+                    isRangeEnd={isSelected && dateStr === selEnd}
+                    onMouseDown={(e) => onCellMouseDown(dateStr, e)}
+                    onMouseEnter={() => onCellMouseEnter(dateStr)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      function HeatLegend() {
+        return (
+          <div className="heat-legend">
+            <span className="legend-label">0</span>
+            <div className="legend-track">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <div
+                  key={n}
+                  className="legend-stop"
+                  style={{
+                    background: n === 0 ? "var(--surface)" : heatColor(n),
+                  }}
+                  title={`${n}/10 rooms`}
+                />
+              ))}
+            </div>
+            <span className="legend-label">10 rooms</span>
+          </div>
+        );
+      }
+
+      function BookingCard({ booking }) {
+        const {
+          id,
+          guestName,
+          roomNumber,
+          roomType,
+          checkIn,
+          checkOut,
+          guests,
+          totalAmount,
+          status,
+          source,
+        } = booking;
+        const nights = nightsBetween(checkIn, checkOut);
+        const meta = STATUS_META[status] || STATUS_META.confirmed;
+        const fmt = (n) => new Intl.NumberFormat("en-IN").format(n);
+        return (
+          <div className="booking-card">
+            <div className="booking-card-header">
+              <div className="booking-id-room">
+                <span className="booking-id">{id}</span>
+                <span className="booking-room">Room {roomNumber}</span>
+                <span className="booking-room-type">{roomType}</span>
+              </div>
+              <span
+                className="booking-status"
+                style={{ color: meta.color, background: meta.bg }}
+              >
+                {meta.label}
+              </span>
+            </div>
+            <p className="booking-guest">{guestName}</p>
+            <div className="booking-details">
+              <div className="booking-detail-item">
+                <span className="detail-label">Check-in</span>
+                <span className="detail-value">{checkIn}</span>
+              </div>
+              <div className="booking-detail-item">
+                <span className="detail-label">Check-out</span>
+                <span className="detail-value">{checkOut}</span>
+              </div>
+              <div className="booking-detail-item">
+                <span className="detail-label">Nights</span>
+                <span className="detail-value nights">{nights}</span>
+              </div>
+              <div className="booking-detail-item">
+                <span className="detail-label">Guests</span>
+                <span className="detail-value">{guests}</span>
+              </div>
+              <div className="booking-detail-item">
+                <span className="detail-label">Amount</span>
+                <span className="detail-value amount">₹{fmt(totalAmount)}</span>
+              </div>
+              <div className="booking-detail-item">
+                <span className="detail-label">Source</span>
+                <span className="detail-value">{source}</span>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      function exportCSV(bookings, start, end) {
+        const header =
+          "ID,Guest,Room,Type,CheckIn,CheckOut,Nights,Guests,Amount,Currency,Status,Source";
+        const rows = bookings.map((b) =>
+          [
+            b.id,
+            `"${b.guestName}"`,
+            b.roomNumber,
+            b.roomType,
+            b.checkIn,
+            b.checkOut,
+            nightsBetween(b.checkIn, b.checkOut),
+            b.guests,
+            b.totalAmount,
+            b.currency,
+            b.status,
+            b.source,
+          ].join(","),
+        );
+        const csv = [header, ...rows].join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `bookings_${start}_${end || start}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      function DetailPanel({ selection, bookings, onClear }) {
+        const { start, end } = selection;
+        if (!start)
+          return (
+            <aside className="detail-panel empty-panel">
+              <div className="empty-hint">
+                <span className="empty-icon">📅</span>
+                <p>Click a day or drag across a date range to see bookings.</p>
+              </div>
+            </aside>
+          );
+        const rangeLabel = end && end !== start ? `${start} → ${end}` : start;
+        const totalRevenue = bookings.reduce(
+          (s, b) => s + (b.status !== "cancelled" ? b.totalAmount : 0),
+          0,
+        );
+        const fmt = (n) => new Intl.NumberFormat("en-IN").format(n);
+        return (
+          <aside className="detail-panel">
+            <div className="panel-header">
+              <div>
+                <p className="panel-range">{rangeLabel}</p>
+                <p className="panel-count">
+                  {bookings.length} booking{bookings.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+              <div className="panel-actions">
+                {bookings.length > 0 && (
+                  <button
+                    className="btn-export"
+                    onClick={() => exportCSV(bookings, start, end)}
+                  >
+                    ⬇ Export CSV
+                  </button>
+                )}
+                <button className="btn-clear" onClick={onClear}>
+                  ✕
+                </button>
+              </div>
+            </div>
+            {bookings.length > 0 && (
+              <div className="panel-revenue">
+                Active revenue: <strong>₹{fmt(totalRevenue)}</strong>
+              </div>
+            )}
+            <div className="panel-cards">
+              {bookings.length === 0 ? (
+                <p className="no-bookings">No bookings overlap this range.</p>
+              ) : (
+                bookings.map((b) => <BookingCard key={b.id} booking={b} />)
+              )}
+            </div>
+          </aside>
+        );
+      }
+
+      // ── Root App ──────────────────────────────────────────────────────────────
+      function readLS(key, fallback) {
+        try {
+          return JSON.parse(localStorage.getItem(key)) ?? fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      function todayView() {
+        const d = new Date();
+        return { year: d.getFullYear(), month: d.getMonth() };
+      }
+
+      function App() {
+        const [view, setView] = useState(() =>
+          readLS("guestara_view", todayView()),
+        );
+        const [filters, setFilters] = useState(() =>
+          readLS("guestara_filters", {
+            status: "all",
+            roomType: "all",
+            source: "all",
+          }),
+        );
+        const [selection, setSelection] = useState({ start: null, end: null });
+        const [dragging, setDragging] = useState(false);
+        const dragStart = useRef(null);
+        const dragEnd = useRef(null);
+
+        useEffect(() => {
+          localStorage.setItem("guestara_view", JSON.stringify(view));
+        }, [view]);
+        useEffect(() => {
+          localStorage.setItem("guestara_filters", JSON.stringify(filters));
+        }, [filters]);
+
+        const filteredBookings = useMemo(
+          () => applyFilters(BOOKINGS_DATA, filters),
+          [filters],
+        );
+        const occupancyMap = useMemo(
+          () => buildOccupancyMap(filteredBookings),
+          [filteredBookings],
+        );
+        const monthStats = useMemo(
+          () =>
+            computeMonthStats(
+              filteredBookings,
+              occupancyMap,
+              view.year,
+              view.month,
+            ),
+          [filteredBookings, occupancyMap, view],
+        );
+        const panelBookings = useMemo(
+          () =>
+            getBookingsInRange(BOOKINGS_DATA, selection.start, selection.end),
+          [selection],
+        );
+
+        function getRange(a, b) {
+          if (!a) return { start: null, end: null };
+          const end = b || a;
+          return a <= end ? { start: a, end } : { start: end, end: a };
+        }
+
+        const handleCellMouseDown = useCallback((dateStr, e) => {
+          e.preventDefault();
+          setDragging(true);
+          dragStart.current = dateStr;
+          dragEnd.current = dateStr;
+        }, []);
+
+        const handleCellMouseEnter = useCallback(
+          (dateStr) => {
+            if (dragging) {
+              dragEnd.current = dateStr;
+              setDragging((d) => d);
+            }
+          },
+          [dragging],
+        );
+
+        const isInDragRange = useCallback(
+          (dateStr) => {
+            if (!dragging || !dragStart.current) return false;
+            const { start, end } = getRange(dragStart.current, dragEnd.current);
+            return dateStr >= start && dateStr <= end;
+          },
+          [dragging],
+        );
+
+        useEffect(() => {
+          const up = () => {
+            if (dragging) {
+              setDragging(false);
+              setSelection(getRange(dragStart.current, dragEnd.current));
+            }
+          };
+          window.addEventListener("mouseup", up);
+          return () => window.removeEventListener("mouseup", up);
+        }, [dragging]);
+
+        const goPrev = () =>
+          setView((v) =>
+            v.month === 0
+              ? { year: v.year - 1, month: 11 }
+              : { ...v, month: v.month - 1 },
+          );
+        const goNext = () =>
+          setView((v) =>
+            v.month === 11
+              ? { year: v.year + 1, month: 0 }
+              : { ...v, month: v.month + 1 },
+          );
+        const goToday = () => setView(todayView());
+
+        return (
+          <div className="app">
+            <header className="app-header">
+              <div className="header-brand">
+                <span className="brand-logo">⬡</span>
+                <span className="brand-name">Guestara</span>
+                <span className="brand-tagline">Occupancy Dashboard</span>
+              </div>
+              <div className="header-meta">
+                <span className="meta-info">
+                  {BOOKINGS_DATA.length} bookings · {TOTAL_ROOMS} rooms
+                </span>
+              </div>
+            </header>
+            <StatsStrip stats={monthStats} />
+            <FilterBar filters={filters} onFiltersChange={setFilters} />
+            <div className="main-layout">
+              <div className="calendar-section">
+                <MonthNav
+                  year={view.year}
+                  month={view.month}
+                  onPrev={goPrev}
+                  onNext={goNext}
+                  onToday={goToday}
+                />
+                <CalendarGrid
+                  year={view.year}
+                  month={view.month}
+                  occupancyMap={occupancyMap}
+                  selection={selection}
+                  dragState={{ active: dragging, inRange: isInDragRange }}
+                  onCellMouseDown={handleCellMouseDown}
+                  onCellMouseEnter={handleCellMouseEnter}
+                />
+                <HeatLegend />
+              </div>
+              <DetailPanel
+                selection={selection}
+                bookings={panelBookings}
+                onClear={() => setSelection({ start: null, end: null })}
+              />
+            </div>
+          </div>
+        );
+      }
+
+      ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+  </body>
+</html>
