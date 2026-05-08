@@ -1,53 +1,175 @@
-# Guestara — Hotel Occupancy Dashboard
+# Guestara – Occupancy Dashboard
 
-A single-page React app that visualises hotel bookings as an interactive occupancy heatmap calendar.
+A modern and responsive hotel occupancy analytics dashboard built to visualize booking trends, occupancy rates, revenue insights, and operational KPIs in a clean and interactive way.
 
-## Requirements
-- **Node.js ≥ 18**
-- **npm ≥ 9**
+---
 
-## Run locally
+## 🚀 Project Overview
+
+Guestara Occupancy Dashboard is designed to help hospitality businesses monitor and analyze occupancy-related metrics efficiently. The dashboard provides real-time insights into hotel performance, room utilization, booking patterns, and overall operational health through visually rich analytics components.
+
+This project focuses on:
+- Data visualization
+- Dashboard UI/UX
+- Hospitality analytics
+- Performance monitoring
+- Responsive design
+
+- <img width="1440" height="809" alt="Screenshot 2569-05-08 at 5 43 32 PM" src="https://github.com/user-attachments/assets/92df2191-32ce-4a0d-89d0-5bd778d5a328" />
+
+
+---
+
+## ✨ Features
+
+- 📊 Interactive occupancy analytics dashboard
+- 🏨 Hotel and room performance tracking
+- 📈 Revenue and booking insights
+- 📅 Occupancy trend visualization
+- 📱 Fully responsive design
+- ⚡ Fast and optimized frontend performance
+- 🎨 Clean and modern UI
+- 🔍 Easy-to-understand analytics layout
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React.js
+- Tailwind CSS
+- JavaScript
+- HTML5
+- CSS3
+
+### Tools & Libraries
+- React Icons
+- Chart Libraries
+- Vite
+
+---
+
+## 📂 Project Structure
+
+```bash
+Guestara---Occupancy-Dashboard/
+│
+├── public/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── assets/
+│   ├── data/
+│   ├── charts/
+│   └── App.js
+│
+├── package.json
+├── tailwind.config.js
+└── README.md
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/Asmit13/Guestara---Occupancy-Dashboard.git
+```
+
+### 2️⃣ Navigate into the Project
+
+```bash
+cd Guestara---Occupancy-Dashboard
+```
+
+### 3️⃣ Install Dependencies
 
 ```bash
 npm install
+```
+
+### 4️⃣ Run the Development Server
+
+```bash
 npm run dev
 ```
 
-Then open **http://localhost:5173** in your browser.
-
-## Build for production
+or
 
 ```bash
-npm run build
-npm run preview
+npm start
 ```
 
-## Project structure
+---
 
-```
-src/
-  components/
-    BookingCard.jsx    – Single booking display card
-    CalendarGrid.jsx   – 7-column month grid
-    DayCell.jsx        – Individual day cell with heatmap colour
-    DetailPanel.jsx    – Booking list for selected range (+ CSV export)
-    FilterBar.jsx      – Status / room type / source filters
-    HeatLegend.jsx     – Colour scale legend
-    MonthNav.jsx       – Prev / Next / Today navigation
-    StatsStrip.jsx     – Monthly KPI strip
-  hooks/
-    useBookings.js     – fetch() loader with loading/error states
-    useDragSelect.js   – native mouse-event drag selection
-  utils/
-    bookingUtils.js    – occupancy map, heat colour, stats, filter, export
-    dateUtils.js       – pure date helpers (no libraries)
-  App.jsx              – Root: state, derived data, layout
-  main.jsx             – ReactDOM entry point
-  index.css            – All styles
-public/
-  bookings.json        – The 201 mock bookings (loaded via fetch)
-```
+## 📸 Dashboard Highlights
 
-## Key design decisions
+### Key Metrics Displayed
+- Total Occupancy
+- Available Rooms
+- Revenue Trends
+- Booking Performance
+- Customer Insights
+- Hotel Utilization Statistics
 
-See **NOTES.md** for full reasoning.
+### UI/UX Focus
+- Minimal and clean layout
+- Responsive grid system
+- User-friendly analytics presentation
+- Modern dashboard components
+
+---
+
+## 🎯 Learning Outcomes
+
+Through this project, I improved my understanding of:
+- Building scalable dashboard UIs
+- Data visualization techniques
+- Responsive frontend development
+- Component-based architecture in React
+- Creating user-friendly analytics dashboards
+
+---
+
+## 🔮 Future Improvements
+
+- Real-time API integration
+- Authentication system
+- Dark mode support
+- Advanced filtering & search
+- Export analytics reports
+- AI-based occupancy forecasting
+
+---
+
+## 🤝 Contributing
+
+Contributions, suggestions, and improvements are always welcome.
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Open a pull request
+
+---
+
+## 📬 Contact
+
+### Asmit Aditya Singh
+
+- GitHub: https://github.com/Asmit13
+- LinkedIn: https://www.linkedin.com/in/asmit13/
+
+---
+
+## ⭐ Support
+
+If you found this project helpful, consider giving it a star ⭐ on GitHub.
+
+---
+
+## 📄 License
+
+This project is open-source and available under the MIT License.
